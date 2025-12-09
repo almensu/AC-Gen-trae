@@ -4,3 +4,7 @@ dist
 .env
 storage/outputs/*
 !storage/outputs/.gitkeep
+storage/products/*
+!storage/products/.gitkeep
+storage/decorations/*
+!storage/decorations/.gitkeep

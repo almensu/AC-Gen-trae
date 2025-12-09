@@ -1,1 +1,38 @@
-[]
+[
+  {
+    "id": "1765250723181",
+    "filePath": "products/1765250723178-674803225.png",
+    "meta": {
+      "category": "AC",
+      "acFormFactor": "WALL",
+      "series": "天丽",
+      "color": "皓雪白",
+      "energyLevels": [
+        "B1",
+        "B3"
+      ],
+      "capacityCodes": [
+        "26",
+        "35"
+      ]
+    }
+  },
+  {
+    "id": "1765250861383",
+    "filePath": "products/1765250861381-979845174.png",
+    "meta": {
+      "category": "AC",
+      "acFormFactor": "CABINET",
+      "series": "天丽",
+      "color": "皓雪白",
+      "energyLevels": [
+        "B1",
+        "B3"
+      ],
+      "capacityCodes": [
+        "50",
+        "72"
+      ]
+    }
+  }
+]

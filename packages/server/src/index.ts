@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
+import assetsRouter from './routes/assets';
 
 dotenv.config();
 
@@ -13,6 +14,9 @@ app.use(express.json());
 
 // Serve static files from storage
 app.use('/storage', express.static(path.join(__dirname, '../../../storage')));
+
+// API Routes
+app.use('/api', assetsRouter);
 
 app.get('/', (req, res) => {
   res.send('AC-Gen Server is running');
