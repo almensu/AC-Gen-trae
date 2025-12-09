@@ -1,1 +1,36 @@
-[]
+[
+  {
+    "id": "1765262093753",
+    "createdAt": "2025-12-09T06:34:53.753Z",
+    "projectName": "金湖店-01",
+    "displayName": "2025-12-09 14:34:48",
+    "canvasWidth": 800,
+    "canvasHeight": 800,
+    "template": {
+      "layerOrder": [
+        {
+          "type": "price",
+          "zIndex": 50
+        },
+        {
+          "type": "background",
+          "zIndex": 40
+        },
+        {
+          "type": "decoration",
+          "decorationCategory": "BRAND_LOGO",
+          "zIndex": 30
+        },
+        {
+          "type": "decoration",
+          "decorationCategory": "OTHER",
+          "zIndex": 20
+        },
+        {
+          "type": "product",
+          "zIndex": 10
+        }
+      ]
+    }
+  }
+]

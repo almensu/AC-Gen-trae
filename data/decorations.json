@@ -1,1 +1,80 @@
-[]
+[
+  {
+    "id": "1765261216620",
+    "filePath": "decorations/1765261216604-684672383.png",
+    "meta": {
+      "projectName": "金湖店-01",
+      "category": "BRAND_LOGO",
+      "zIndex": 10
+    }
+  },
+  {
+    "id": "1765261252009",
+    "filePath": "decorations/1765261252006-596748422.png",
+    "meta": {
+      "projectName": "金湖店-01",
+      "category": "OTHER",
+      "energyLevels": [
+        "B1"
+      ],
+      "zIndex": 10
+    }
+  },
+  {
+    "id": "1765261276480",
+    "filePath": "decorations/1765261276476-179408205.png",
+    "meta": {
+      "projectName": "金湖店-01",
+      "category": "OTHER",
+      "capacityCodes": [
+        "26"
+      ],
+      "zIndex": 10
+    }
+  },
+  {
+    "id": "1765261366034",
+    "filePath": "decorations/1765261366032-607168815.png",
+    "meta": {
+      "projectName": "金湖店-01",
+      "category": "OTHER",
+      "capacityCodes": [
+        "35"
+      ],
+      "zIndex": 10
+    }
+  },
+  {
+    "id": "1765261468389",
+    "filePath": "decorations/1765261468386-775039129.png",
+    "meta": {
+      "projectName": "金湖店-01",
+      "category": "OTHER",
+      "capacityCodes": [
+        "50"
+      ],
+      "zIndex": 10
+    }
+  },
+  {
+    "id": "1765261486807",
+    "filePath": "decorations/1765261486807-800908633.png",
+    "meta": {
+      "projectName": "金湖店-01",
+      "category": "OTHER",
+      "capacityCodes": [
+        "72"
+      ],
+      "zIndex": 10
+    }
+  },
+  {
+    "id": "1765267340171",
+    "filePath": "decorations/1765267340168-699459979.jpg",
+    "meta": {
+      "projectName": "金湖店-01",
+      "category": "BACKGROUND",
+      "zIndex": 10
+    }
+  }
+]
