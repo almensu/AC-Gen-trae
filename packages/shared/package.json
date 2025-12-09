@@ -1,0 +1,14 @@
+{
+  "name": "@ac-gen/shared",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "scripts": {
+    "test": "vitest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "vitest": "^4.0.15"
+  }
+}

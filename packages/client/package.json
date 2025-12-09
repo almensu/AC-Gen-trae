@@ -1,0 +1,31 @@
+{
+  "name": "@ac-gen/client",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "test": "vitest",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@ac-gen/shared": "1.0.0",
+    "antd": "^5.4.0",
+    "axios": "^1.3.5",
+    "fabric": "^5.3.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "sass": "^1.62.0",
+    "zustand": "^4.3.7"
+  },
+  "devDependencies": {
+    "@types/fabric": "^5.3.0",
+    "@types/react": "^18.0.28",
+    "@types/react-dom": "^18.0.11",
+    "@vitejs/plugin-react": "^4.0.0",
+    "typescript": "^5.0.0",
+    "vite": "^4.3.2",
+    "vitest": "^4.0.15"
+  }
+}

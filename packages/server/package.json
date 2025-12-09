@@ -1,0 +1,28 @@
+{
+  "name": "@ac-gen/server",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "test": "vitest",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@ac-gen/shared": "1.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "multer": "^1.4.5-lts.1",
+    "sharp": "^0.32.1"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.13",
+    "@types/express": "^4.17.17",
+    "@types/multer": "^1.4.7",
+    "@types/node": "^18.15.11",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^4.0.15"
+  }
+}
