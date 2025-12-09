@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
 import { Table, Button, Popconfirm, Space } from 'antd';
-import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
+import { DeleteOutlined } from '@ant-design/icons';
 import { useProjectStore } from '../../stores/useProjectStore';
 import { Project } from '@ac-gen/shared';
+import { EditProjectModal } from './EditProjectModal';
 
 export const ProjectList: React.FC = () => {
   const { projects, loading, fetchProjects, deleteProject } = useProjectStore();
@@ -40,7 +41,7 @@ export const ProjectList: React.FC = () => {
       key: 'action',
       render: (_: any, record: Project) => (
         <Space>
-          <Button type="text" icon={<EditOutlined />} />
+          <EditProjectModal project={record} />
           <Popconfirm
             title="Delete project?"
             description="This will not delete the associated assets."

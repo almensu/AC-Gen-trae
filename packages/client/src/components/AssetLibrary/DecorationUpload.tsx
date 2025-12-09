@@ -7,7 +7,7 @@ import type { UploadFile } from 'antd/es/upload/interface';
 
 const { Option } = Select;
 
-export const DecorationUpload: React.FC = () => {
+export const DecorationUpload: React.FC<{ initialProjectName?: string }> = ({ initialProjectName }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const uploadDecoration = useAssetStore((state) => state.uploadDecoration);
@@ -52,9 +52,16 @@ export const DecorationUpload: React.FC = () => {
     return e?.fileList;
   };
 
+  const handleOpen = () => {
+      setIsModalOpen(true);
+      if (initialProjectName) {
+          form.setFieldsValue({ projectName: initialProjectName });
+      }
+  };
+
   return (
     <>
-      <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
+      <Button type="primary" icon={<PlusOutlined />} onClick={handleOpen}>
         Upload Decoration
       </Button>
       <Modal
@@ -67,7 +74,7 @@ export const DecorationUpload: React.FC = () => {
           form={form}
           layout="vertical"
           onFinish={handleUpload}
-          initialValues={{ category: 'OTHER', zIndex: 10 }}
+          initialValues={{ category: 'OTHER', zIndex: 10, projectName: initialProjectName }}
         >
           <Form.Item
             name="file"
@@ -88,7 +95,7 @@ export const DecorationUpload: React.FC = () => {
           </Form.Item>
 
           <Form.Item name="projectName" label="Project Name" rules={[{ required: true }]}>
-            <Input placeholder="e.g. haier_2025_q1" />
+            <Input placeholder="e.g. haier_2025_q1" disabled={!!initialProjectName} />
           </Form.Item>
 
           <Form.Item name="category" label="Category" rules={[{ required: true }]}>

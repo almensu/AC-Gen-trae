@@ -87,6 +87,10 @@ export type Project = {
   canvasWidth: number;
   canvasHeight: number;
   createdAt: string;
+  
+  // Optional: Limit which products are available for this project
+  linkedProductIds?: string[];
+  
   template?: ProjectTemplate;
 };
 

@@ -45,8 +45,17 @@ export const CompositionBuilder: React.FC = () => {
 
   // 获取当前选中项目的信息
   const currentProject = useMemo(() => 
-    projects.find(p => p.id === selectedProjectId), 
+    projects.find(p => p.id === selectedProjectId) || 
+    projects.find(p => p.projectName === selectedProjectId), 
   [projects, selectedProjectId]);
+
+  // Filter products based on project whitelist
+  const availableProducts = useMemo(() => {
+    if (!currentProject?.linkedProductIds || currentProject.linkedProductIds.length === 0) {
+      return products;
+    }
+    return products.filter(p => currentProject.linkedProductIds!.includes(p.id));
+  }, [products, currentProject]);
 
   const handleGenerate = () => {
     generateVariants();
@@ -116,7 +125,7 @@ export const CompositionBuilder: React.FC = () => {
                       onChange={setSelectedProductIds}
                       disabled={!selectedProjectId}
                     >
-                      {products.map(p => (
+                      {availableProducts.map(p => (
                         <Option key={p.id} value={p.id}>
                           {p.meta.series} - {p.meta.color} ({p.meta.acFormFactor})
                         </Option>
