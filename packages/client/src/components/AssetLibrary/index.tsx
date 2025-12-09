@@ -2,6 +2,8 @@ import React from 'react';
 import { Card, Tabs } from 'antd';
 import { ProductUpload } from './ProductUpload';
 import { ProductList } from './ProductList';
+import { DecorationUpload } from './DecorationUpload';
+import { DecorationList } from './DecorationList';
 
 export const AssetLibrary: React.FC = () => {
   const items = [
@@ -20,7 +22,14 @@ export const AssetLibrary: React.FC = () => {
     {
       key: 'decorations',
       label: 'Decoration Assets',
-      children: <div>Coming Soon (Decorations)</div>,
+      children: (
+        <div>
+          <div style={{ marginBottom: 16, textAlign: 'right' }}>
+            <DecorationUpload />
+          </div>
+          <DecorationList />
+        </div>
+      ),
     },
   ];
 

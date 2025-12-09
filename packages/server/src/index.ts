@@ -3,6 +3,9 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import assetsRouter from './routes/assets';
+import projectsRouter from './routes/projects';
+import batchRouter from './routes/batch';
+import instancesRouter from './routes/instances';
 
 dotenv.config();
 
@@ -17,6 +20,9 @@ app.use('/storage', express.static(path.join(__dirname, '../../../storage')));
 
 // API Routes
 app.use('/api', assetsRouter);
+app.use('/api', projectsRouter);
+app.use('/api', batchRouter);
+app.use('/api', instancesRouter);
 
 app.get('/', (req, res) => {
   res.send('AC-Gen Server is running');

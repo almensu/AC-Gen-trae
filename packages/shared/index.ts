@@ -62,6 +62,24 @@ export type DecorationAsset = {
 };
 
 // ========== 项目 ==========
+export type LayerOrderConfig = {
+  type: 'background' | 'product' | 'decoration' | 'price';
+  // 如果是 decoration，需指定具体是哪个装饰图类别
+  decorationCategory?: DecorationCategory;
+  zIndex: number;
+};
+
+export type ProjectTemplate = {
+  // 项目级默认图层顺序（用户在"项目级预览"中拖拽调整保存）
+  layerOrder: LayerOrderConfig[];
+  
+  // 项目级默认价格配置（可被实例覆盖）
+  defaultPriceConfig?: {
+    originalPrice: PriceLayerConfig;
+    promoPrice: PriceLayerConfig;
+  };
+};
+
 export type Project = {
   id: string;
   projectName: string;     // 格力_2025_q1
@@ -69,6 +87,41 @@ export type Project = {
   canvasWidth: number;
   canvasHeight: number;
   createdAt: string;
+  template?: ProjectTemplate;
+};
+
+// ========== 实例配置（实例微调） ==========
+export type DecorationAdjustment = {
+  decorationId: string;
+  // 相对于原始位置的偏移量
+  offsetX: number;
+  offsetY: number;
+};
+
+export type InstanceConfig = {
+  id: string;
+  projectId: string;
+  
+  // 实例标识（唯一组合）
+  productId: string;
+  energyLevel?: EnergyLevelCode;
+  capacityCode?: CapacityCode;
+  
+  // ========== 实例专属调整 ==========
+  // 价格文本覆盖
+  priceOverride?: {
+    original: string;
+    promo: string;
+    // 可选：调整价格文本位置（覆盖项目默认）
+    originalPosition?: { x: number; y: number };
+    promoPosition?: { x: number; y: number };
+  };
+  
+  // 装饰图位置微调（相对于项目默认）
+  decorationAdjustments?: DecorationAdjustment[];
+  
+  createdAt: string;
+  updatedAt: string;
 };
 
 // ========== 组合输入 ==========
@@ -94,6 +147,8 @@ export type LayerItem = {
   textStyle?: PriceLayerConfig;
   
   zIndex: number;
+  x?: number;
+  y?: number;
 };
 
 export type CompositionOutput = {
