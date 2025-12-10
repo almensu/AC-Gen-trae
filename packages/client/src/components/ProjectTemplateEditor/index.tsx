@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { Card, Button, List, Typography, Tag, Empty, message, Alert, Image } from 'antd';
-import { SaveOutlined, HolderOutlined } from '@ant-design/icons';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import { Card, Button, List, Typography, Tag, Empty, message, Alert, Image, Tooltip, Space } from 'antd';
+import { SaveOutlined, HolderOutlined, ReloadOutlined, UndoOutlined } from '@ant-design/icons';
 import {
   DndContext,
   closestCenter,
@@ -62,7 +62,17 @@ const SortableItem: React.FC<SortableItemProps> = ({ id, item, thumbnailUrl }) =
       case 'background': return 'Background Layer';
       case 'product': return 'Product Layer';
       case 'price': return 'Price Text Layer';
-      case 'decoration': return `Decoration: ${item.decorationCategory}`;
+      case 'decoration': {
+        if (item.decorationId) {
+             // Try to find the asset to show a better name?
+             // Or just show ID for now
+             // Better: "Decoration: OTHER (Asset-ID)"
+             // Ideally we would pass decorations list to this component to lookup name, 
+             // but for now let's just show it's a specific asset
+             return `Decoration: ${item.decorationCategory} (Specific Asset)`;
+        }
+        return `Decoration: ${item.decorationCategory}`;
+      }
       default: return 'Unknown Layer';
     }
   };
@@ -126,6 +136,12 @@ export const ProjectTemplateEditor: React.FC = () => {
     projects.find(p => p.projectName === selectedProjectId), 
   [projects, selectedProjectId]);
 
+  // Filter decorations for current project to be safe
+  const projectDecorations = useMemo(() => {
+      if (!currentProject) return [];
+      return decorations.filter(d => d.meta.projectName === currentProject.projectName);
+  }, [decorations, currentProject]);
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -144,50 +160,114 @@ export const ProjectTemplateEditor: React.FC = () => {
     }
   }, [selectedProjectId, fetchDecorations]);
 
-  // Initialize layers
-  useEffect(() => {
+  // Recalculate layers logic
+  const refreshLayers = useCallback((useSavedTemplate = true) => {
     if (!currentProject) return;
 
-    if (currentProject.template?.layerOrder) {
-      // Use saved template, sorted by zIndex descending (Top layer first in list)
-      const sorted = [...currentProject.template.layerOrder].sort((a, b) => b.zIndex - a.zIndex);
-      setLayers(sorted);
-    } else {
-      // Generate default
-      const defaultLayers: LayerOrderConfig[] = [];
-      
-      // 1. Price (Top)
-      defaultLayers.push({ type: 'price', zIndex: 200 });
-
-      // 2. Decorations (Middle-Top)
-      const categories = Array.from(new Set(decorations.map(d => d.meta.category)));
-      categories.forEach((cat, index) => {
-        if (cat !== 'BACKGROUND') {
-          defaultLayers.push({ 
-            type: 'decoration', 
-            decorationCategory: cat, 
-            zIndex: 100 + index 
-          });
-        }
-      });
-
-      // 3. Product (Middle)
-      defaultLayers.push({ type: 'product', zIndex: 50 });
-
-      // 4. Background (Bottom)
-      defaultLayers.push({ type: 'background', zIndex: 0 });
-
-      setLayers(defaultLayers); 
+    // 1. Get existing layers from saved template (if requested and exists)
+    let initialLayers: LayerOrderConfig[] = [];
+    
+    if (useSavedTemplate && currentProject.template?.layerOrder) {
+      initialLayers = [...currentProject.template.layerOrder];
     }
-  }, [currentProject, decorations]);
+
+    // 2. Identify all required categories from current decorations
+    const allCategories = Array.from(new Set(projectDecorations.map(d => d.meta.category)));
+    console.log('ProjectTemplateEditor: All Categories found in assets:', allCategories);
+    
+    // 3. Check for missing categories
+    const existingCategories = new Set(
+        initialLayers
+            .filter(l => l.type === 'decoration')
+            .map(l => l.decorationCategory)
+    );
+    
+    const missingCategories = allCategories.filter(cat => cat !== 'BACKGROUND' && !existingCategories.has(cat));
+    console.log('ProjectTemplateEditor: Missing Categories to add:', missingCategories);
+    
+    // 4. Also check for standard layers if starting fresh or they are missing
+    const hasProduct = initialLayers.some(l => l.type === 'product');
+    const hasPrice = initialLayers.some(l => l.type === 'price');
+    const hasBackground = initialLayers.some(l => l.type === 'background');
+
+    let newLayers = [...initialLayers];
+
+    // Add missing standard layers if empty (first init)
+    if (newLayers.length === 0) {
+        if (!hasPrice) newLayers.push({ type: 'price', zIndex: 200 });
+        if (!hasProduct) newLayers.push({ type: 'product', zIndex: 50 });
+        if (!hasBackground) newLayers.push({ type: 'background', zIndex: 0 });
+    }
+
+    // Add missing decoration categories (defaulting to top)
+    if (missingCategories.length > 0) {
+        missingCategories.forEach((cat, index) => {
+             // Special handling for OTHER: check if we should split them by asset
+             // But for now, user requested explicit splitting.
+             if (cat === 'OTHER') {
+                 // Do not add generic 'OTHER' category if we are going to add specific assets
+                 // But wait, existing logic is category-based.
+             }
+
+             // Find highest current zIndex to place on top
+             const maxZ = newLayers.length > 0 ? Math.max(...newLayers.map(l => l.zIndex)) : 100;
+             newLayers.push({
+                 type: 'decoration',
+                 decorationCategory: cat,
+                 zIndex: maxZ + 10 + (index * 10)
+             });
+        });
+    }
+    
+    // NEW LOGIC: Handle splitting 'OTHER' category into individual asset layers
+    // 1. Find all assets in 'OTHER' category
+    const otherAssets = projectDecorations.filter(d => d.meta.category === 'OTHER');
+    
+    if (otherAssets.length > 0) {
+        // 2. Remove the generic 'OTHER' category layer if it exists
+        // (We replace it with specific asset layers)
+        const genericOtherIndex = newLayers.findIndex(l => l.decorationCategory === 'OTHER' && !l.decorationId);
+        let baseZIndex = 100;
+        
+        if (genericOtherIndex !== -1) {
+            baseZIndex = newLayers[genericOtherIndex].zIndex;
+            newLayers.splice(genericOtherIndex, 1);
+        }
+
+        // 3. Add a layer for EACH 'OTHER' asset if not already present
+        otherAssets.forEach((asset, idx) => {
+            const exists = newLayers.some(l => l.decorationId === asset.id);
+            if (!exists) {
+                newLayers.push({
+                    type: 'decoration',
+                    decorationCategory: 'OTHER',
+                    decorationId: asset.id, // Specific asset binding
+                    zIndex: baseZIndex + idx // Stack them slightly apart
+                });
+            }
+        });
+    }
+
+    // 5. Sort by zIndex descending (Top layer first in list)
+    const sorted = newLayers.sort((a, b) => b.zIndex - a.zIndex);
+    
+    setLayers(sorted);
+    // If we added new layers significantly different from saved, we could set unsaved changes, 
+    // but usually auto-discovery is just display logic until saved.
+  }, [currentProject, projectDecorations]);
+
+  // Initialize layers on mount or change
+  useEffect(() => {
+      refreshLayers(true);
+  }, [refreshLayers]);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
       setLayers((items) => {
-        const oldIndex = items.findIndex((item) => `layer-${item.type}-${item.decorationCategory || ''}` === active.id);
-        const newIndex = items.findIndex((item) => `layer-${item.type}-${item.decorationCategory || ''}` === over.id);
+        const oldIndex = items.findIndex((item) => `layer-${item.type}-${item.decorationCategory || ''}-${item.decorationId || ''}` === active.id);
+        const newIndex = items.findIndex((item) => `layer-${item.type}-${item.decorationCategory || ''}-${item.decorationId || ''}` === over.id);
         
         const newLayers = arrayMove(items, oldIndex, newIndex);
         
@@ -273,7 +353,13 @@ export const ProjectTemplateEditor: React.FC = () => {
           return previewProduct ? `/storage/${previewProduct.filePath}` : undefined;
       }
       if (layerConfig.type === 'decoration' || layerConfig.type === 'background') {
-          // Find a representative decoration for this category
+          // New logic: Check if it's bound to a specific asset ID first
+          if (layerConfig.decorationId) {
+             const specificDeco = decorations.find(d => d.id === layerConfig.decorationId);
+             return specificDeco ? `/storage/${specificDeco.filePath}` : undefined;
+          }
+
+          // Fallback: Find a representative decoration for this category
           const cat = layerConfig.decorationCategory || (layerConfig.type === 'background' ? 'BACKGROUND' : undefined);
           if (cat) {
               const deco = decorations.find(d => d.meta.category === cat);
@@ -293,14 +379,22 @@ export const ProjectTemplateEditor: React.FC = () => {
         <Card 
           title="Layer Stack (Top to Bottom)" 
           extra={
-            <Button 
-              type="primary" 
-              icon={<SaveOutlined />} 
-              onClick={handleSave}
-              disabled={!hasUnsavedChanges}
-            >
-              Save Template
-            </Button>
+            <Space>
+                <Tooltip title="Reload from assets (find new layers)">
+                    <Button icon={<ReloadOutlined />} onClick={() => refreshLayers(true)} />
+                </Tooltip>
+                <Tooltip title="Reset to default">
+                    <Button icon={<UndoOutlined />} onClick={() => refreshLayers(false)} />
+                </Tooltip>
+                <Button 
+                type="primary" 
+                icon={<SaveOutlined />} 
+                onClick={handleSave}
+                disabled={!hasUnsavedChanges}
+                >
+                Save Template
+                </Button>
+            </Space>
           }
         >
           <Alert 
@@ -315,19 +409,21 @@ export const ProjectTemplateEditor: React.FC = () => {
             collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
           >
-            <SortableContext 
-              items={layers.map(l => `layer-${l.type}-${l.decorationCategory || ''}`)}
-              strategy={verticalListSortingStrategy}
-            >
-              {layers.map((layer) => (
-                <SortableItem 
-                  key={`layer-${layer.type}-${layer.decorationCategory || ''}`}
-                  id={`layer-${layer.type}-${layer.decorationCategory || ''}`}
-                  item={layer}
-                  thumbnailUrl={getLayerThumbnail(layer)}
-                />
-              ))}
-            </SortableContext>
+            <div style={{ maxHeight: 'calc(100vh - 300px)', overflowY: 'auto', paddingRight: 8 }}>
+              <SortableContext 
+                items={layers.map(l => `layer-${l.type}-${l.decorationCategory || ''}-${l.decorationId || ''}`)}
+                strategy={verticalListSortingStrategy}
+              >
+                {layers.map((layer) => (
+                  <SortableItem 
+                    key={`layer-${layer.type}-${layer.decorationCategory || ''}-${layer.decorationId || ''}`}
+                    id={`layer-${layer.type}-${layer.decorationCategory || ''}-${layer.decorationId || ''}`}
+                    item={layer}
+                    thumbnailUrl={getLayerThumbnail(layer)}
+                  />
+                ))}
+              </SortableContext>
+            </div>
           </DndContext>
         </Card>
       </div>

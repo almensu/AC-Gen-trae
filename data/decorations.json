@@ -76,5 +76,14 @@
       "category": "BACKGROUND",
       "zIndex": 10
     }
+  },
+  {
+    "id": "1765274177015",
+    "filePath": "decorations/1765274177012-153368800.png",
+    "meta": {
+      "projectName": "金湖店-01",
+      "category": "OTHER",
+      "zIndex": 10
+    }
   }
 ]

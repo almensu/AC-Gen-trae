@@ -10,20 +10,51 @@
       "layerOrder": [
         {
           "type": "price",
-          "zIndex": 50
+          "zIndex": 100
         },
         {
           "type": "decoration",
           "decorationCategory": "BRAND_LOGO",
+          "zIndex": 90
+        },
+        {
+          "type": "decoration",
+          "decorationCategory": "OTHER",
+          "decorationId": "1765274177015",
+          "zIndex": 80
+        },
+        {
+          "type": "product",
+          "zIndex": 70
+        },
+        {
+          "type": "decoration",
+          "decorationCategory": "OTHER",
+          "decorationId": "1765261486807",
+          "zIndex": 60
+        },
+        {
+          "type": "decoration",
+          "decorationCategory": "OTHER",
+          "decorationId": "1765261468389",
+          "zIndex": 50
+        },
+        {
+          "type": "decoration",
+          "decorationCategory": "OTHER",
+          "decorationId": "1765261366034",
           "zIndex": 40
         },
         {
           "type": "decoration",
           "decorationCategory": "OTHER",
+          "decorationId": "1765261276480",
           "zIndex": 30
         },
         {
-          "type": "product",
+          "type": "decoration",
+          "decorationCategory": "OTHER",
+          "decorationId": "1765261252009",
           "zIndex": 20
         },
         {

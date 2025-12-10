@@ -66,6 +66,8 @@ export type LayerOrderConfig = {
   type: 'background' | 'product' | 'decoration' | 'price';
   // 如果是 decoration，需指定具体是哪个装饰图类别
   decorationCategory?: DecorationCategory;
+  // 可选：指定具体的 decoration ID (用于 OTHER 类别等需要多图层共存的情况)
+  decorationId?: string;
   zIndex: number;
 };
 

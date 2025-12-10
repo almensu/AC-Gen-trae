@@ -15,10 +15,21 @@ function computeLayersServer(
   const layers: LayerItem[] = [];
 
   // Helper to get zIndex from template
-  const getZIndex = (type: 'background' | 'product' | 'decoration' | 'price', category?: DecorationCategory): number => {
+  const getZIndex = (type: 'background' | 'product' | 'decoration' | 'price', category?: DecorationCategory, decorationId?: string): number => {
     if (projectTemplate?.layerOrder) {
+      // 1. First try to find exact match by decorationId (for specific OTHER assets)
+      if (decorationId) {
+        const idMatch = projectTemplate.layerOrder.find(l => l.decorationId === decorationId);
+        if (idMatch) return idMatch.zIndex;
+      }
+
+      // 2. Fallback to category match (for grouped decorations)
       const config = projectTemplate.layerOrder.find(l => {
         if (l.type !== type) return false;
+
+        // Skip if this config is for a specific decorationId (don't use specific config for generic category)
+        if (l.decorationId) return false;
+
         // If it's a decoration, strictly match category
         if (type === 'decoration') {
              return l.decorationCategory === category;
@@ -87,7 +98,8 @@ function computeLayersServer(
       filePath: deco.filePath,
       zIndex: getZIndex(
         deco.meta.category === 'BACKGROUND' ? 'background' : 'decoration', 
-        deco.meta.category
+        deco.meta.category,
+        deco.id
       ),
       x,
       y,
