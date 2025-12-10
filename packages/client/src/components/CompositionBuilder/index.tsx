@@ -130,6 +130,11 @@ export const CompositionBuilder: React.FC = () => {
                         disabled={!selectedProjectId}
                         style={{ width: '100%' }}
                         maxTagCount="responsive"
+                        showSearch
+                        optionFilterProp="children"
+                        filterOption={(input, option) =>
+                          (option?.children as unknown as string).toLowerCase().includes(input.toLowerCase())
+                        }
                         >
                         {availableProducts.map(p => (
                             <Option key={p.id} value={p.id}>
@@ -137,15 +142,25 @@ export const CompositionBuilder: React.FC = () => {
                             </Option>
                         ))}
                         </Select>
-                        <Button 
-                            size="small" 
-                            type="text" 
-                            danger 
-                            onClick={() => setSelectedProductIds([])}
-                            disabled={selectedProductIds.length === 0}
-                        >
-                            Clear Selection
-                        </Button>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <Button
+                              size="small"
+                              type="text"
+                              onClick={() => setSelectedProductIds(availableProducts.map(p => p.id))}
+                              disabled={selectedProductIds.length === availableProducts.length}
+                          >
+                              Select All
+                          </Button>
+                          <Button 
+                              size="small" 
+                              type="text" 
+                              danger 
+                              onClick={() => setSelectedProductIds([])}
+                              disabled={selectedProductIds.length === 0}
+                          >
+                              Clear Selection
+                          </Button>
+                        </div>
                     </div>
                   </Form.Item>
                 </Col>
