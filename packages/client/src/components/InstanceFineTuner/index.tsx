@@ -158,7 +158,19 @@ export const InstanceFineTuner: React.FC = () => {
 
   // Filter only decoration layers for the sidebar list
   const decorationLayers = useMemo(() => 
-    layers.filter(l => l.type === 'image' && l.id.startsWith('deco-'))
+    layers.filter(l => {
+      // Include both 'decoration' and 'background' types if they are images and have IDs starting with 'deco-'
+      // Based on computeLayers logic, decorations have id `deco-${id}`.
+      // Products have `product-${id}`.
+      return l.id.startsWith('deco-');
+    })
+  , [layers]);
+
+  // Also include Product layer in the list?
+  // User asked: "Why can't I select the product image?"
+  // So we should include ALL layers in the sidebar list, or at least Product + Decorations.
+  const interactiveLayers = useMemo(() => 
+    layers.filter(l => l.type === 'image') // Include all image layers (Product + Decorations)
   , [layers]);
 
   if (!selectedProjectId) {
@@ -223,16 +235,24 @@ export const InstanceFineTuner: React.FC = () => {
              >
                 <List
                     size="small"
-                    dataSource={[...decorationLayers].reverse()} // Show top layers first
+                    dataSource={[...interactiveLayers].reverse()} // Show top layers first
                     renderItem={(item) => {
-                        const decoId = item.id.replace('deco-', '');
-                        const adjustment = currentConfig?.decorationAdjustments?.find(a => a.decorationId === decoId);
+                        const isProduct = item.id.startsWith('product-');
+                        const decoId = isProduct ? '' : item.id.replace('deco-', '');
+                        
+                        const adjustment = !isProduct && currentConfig?.decorationAdjustments?.find(a => a.decorationId === decoId);
                         const isAdjusted = !!adjustment;
                         const isSelected = selectedLayerId === item.id;
                         
                         // Find asset name
-                        const asset = decorations.find(d => d.id === decoId);
-                        const name = asset ? `${asset.meta.category} (${decoId.slice(-4)})` : decoId;
+                        let name = item.id;
+                        if (isProduct) {
+                            const prod = products.find(p => p.id === item.assetId);
+                            name = prod ? `Product: ${prod.meta.series}` : 'Product Layer';
+                        } else {
+                            const asset = decorations.find(d => d.id === decoId);
+                            name = asset ? `${asset.meta.category} (${decoId.slice(-4)})` : decoId;
+                        }
 
                         return (
                             <List.Item 
@@ -251,7 +271,7 @@ export const InstanceFineTuner: React.FC = () => {
                                                 icon={<DeleteOutlined />} 
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    handleResetAdjustment(decoId);
+                                                    if (!isProduct) handleResetAdjustment(decoId);
                                                 }}
                                             />
                                         </Tooltip>
@@ -305,8 +325,9 @@ export const InstanceFineTuner: React.FC = () => {
                     const layer = layers.find(l => l.id === selectedLayerId);
                     if (!layer) return <Empty description="Layer not found" />;
                     
-                    const decoId = layer.id.replace('deco-', '');
-                    const adj = currentConfig?.decorationAdjustments?.find(a => a.decorationId === decoId);
+                    const isProduct = layer.id.startsWith('product-');
+                    const decoId = isProduct ? '' : layer.id.replace('deco-', '');
+                    const adj = !isProduct ? currentConfig?.decorationAdjustments?.find(a => a.decorationId === decoId) : undefined;
                     
                     return (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -321,17 +342,24 @@ export const InstanceFineTuner: React.FC = () => {
                                     <Tag>Y: {Math.round(layer.y || 0)}</Tag>
                                 </div>
                             </div>
-                             <div>
-                                <Text type="secondary">Adjustment Offset</Text>
-                                <div style={{ display: 'flex', gap: 16, marginTop: 4 }}>
-                                    <Tag color={adj ? 'blue' : 'default'}>dX: {Math.round(adj?.offsetX || 0)}</Tag>
-                                    <Tag color={adj ? 'blue' : 'default'}>dY: {Math.round(adj?.offsetY || 0)}</Tag>
+                            {!isProduct && (
+                                <div>
+                                    <Text type="secondary">Adjustment Offset</Text>
+                                    <div style={{ display: 'flex', gap: 16, marginTop: 4 }}>
+                                        <Tag color={adj ? 'blue' : 'default'}>dX: {Math.round(adj?.offsetX || 0)}</Tag>
+                                        <Tag color={adj ? 'blue' : 'default'}>dY: {Math.round(adj?.offsetY || 0)}</Tag>
+                                    </div>
                                 </div>
-                            </div>
-                            {adj && (
+                            )}
+                            {adj && !isProduct && (
                                 <Button danger onClick={() => handleResetAdjustment(decoId)}>
                                     Reset Position
                                 </Button>
+                            )}
+                            {isProduct && (
+                                <Text type="secondary" style={{ fontSize: 12 }}>
+                                    Product layer position is fixed by template.
+                                </Text>
                             )}
                         </div>
                     );
