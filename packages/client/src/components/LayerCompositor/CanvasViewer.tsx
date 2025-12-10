@@ -83,7 +83,6 @@ export const CanvasViewer: React.FC<CanvasViewerProps> = ({ width, height, layer
                     top: layer.y || 0,
                     selectable: false, 
                     evented: false,
-                    // 将 zIndex 存入自定义属性，以便后续 verify
                     // @ts-ignore
                     zIndex: layer.zIndex 
                  });
@@ -92,6 +91,20 @@ export const CanvasViewer: React.FC<CanvasViewerProps> = ({ width, height, layer
                resolve();
              }, { crossOrigin: 'anonymous' });
            });
+        } else if (layer.type === 'text' && layer.textContent && layer.textStyle) {
+            // Render text layer
+            const text = new fabric.Text(layer.textContent, {
+                left: layer.x || 0,
+                top: layer.y || 0,
+                fontFamily: layer.textStyle.fontFamily,
+                fontSize: layer.textStyle.fontSize,
+                fill: layer.textStyle.color,
+                selectable: false,
+                evented: false,
+                // @ts-ignore
+                zIndex: layer.zIndex
+            });
+            canvas.add(text);
         }
       }
       

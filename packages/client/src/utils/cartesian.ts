@@ -29,6 +29,20 @@ export function generateCompositionVariants(
   const userCapacityCodes = selectedCapacityCodes.length > 0 ? selectedCapacityCodes : [undefined];
 
   for (const product of products) {
+    // Special handling for LIFE_APPLIANCE
+    // If product category is LIFE_APPLIANCE, it doesn't need energy/capacity variants.
+    // Just generate one variant per product.
+    if (product.meta.category === 'LIFE_APPLIANCE') {
+        variants.push({
+            projectName,
+            productId: product.id,
+            // Explicitly set undefined to avoid matching decoration rules based on these
+            energyLevel: undefined,
+            capacityCode: undefined,
+        });
+        continue;
+    }
+
     const { energyLevels: productEnergyLevels, capacityCodes: productCapacityCodes } = product.meta;
 
     for (const energyLevel of userEnergyLevels) {

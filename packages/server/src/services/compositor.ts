@@ -58,11 +58,23 @@ function computeLayersServer(
     y: 0,
   });
 
-  // Decoration layers
+  // 2. 筛选并匹配装饰图
   const matchedDecorations = decorations.filter(deco => {
     const { projectName, energyLevels, capacityCodes } = deco.meta;
 
     if (projectName !== input.projectName) return false;
+
+    // Special handling for LIFE_APPLIANCE products (no energy/capacity check)
+    if (product.meta.category === 'LIFE_APPLIANCE') {
+        // Only check if decoration is explicitly restricted (unlikely for life appliance project, but safe to keep)
+        // If decoration has NO restrictions, it matches.
+        // If decoration HAS restrictions, it probably belongs to AC.
+        // Assumption: Decorations for Life Appliance usually have empty energy/capacity arrays.
+        if ((energyLevels && energyLevels.length > 0) || (capacityCodes && capacityCodes.length > 0)) {
+            return false; // This decoration is for AC (has specific AC attributes)
+        }
+        return true;
+    }
 
     if (energyLevels && energyLevels.length > 0) {
       if (!input.energyLevel || !energyLevels.includes(input.energyLevel)) {
@@ -106,6 +118,38 @@ function computeLayersServer(
     });
   });
 
+  // 4. 添加价格文本图层 (如果输入包含价格)
+  if (input.priceOriginalText || input.pricePromoText || projectTemplate?.defaultPriceConfig) {
+    const defaultConfig = projectTemplate?.defaultPriceConfig;
+    const override = instanceConfig?.priceOverride;
+
+    // 原价
+    if (input.priceOriginalText || defaultConfig?.originalPrice) {
+        layers.push({
+            id: 'price-original',
+            type: 'text',
+            textContent: override?.original || input.priceOriginalText || '¥0',
+            textStyle: defaultConfig?.originalPrice,
+            zIndex: getZIndex('price'),
+            x: override?.originalPosition?.x ?? defaultConfig?.originalPrice?.x ?? 0,
+            y: override?.originalPosition?.y ?? defaultConfig?.originalPrice?.y ?? 0,
+        });
+    }
+
+    // 促销价
+    if (input.pricePromoText || defaultConfig?.promoPrice) {
+        layers.push({
+            id: 'price-promo',
+            type: 'text',
+            textContent: override?.promo || input.pricePromoText || '¥0',
+            textStyle: defaultConfig?.promoPrice,
+            zIndex: getZIndex('price'),
+            x: override?.promoPosition?.x ?? defaultConfig?.promoPrice?.x ?? 0,
+            y: override?.promoPosition?.y ?? defaultConfig?.promoPrice?.y ?? 0,
+        });
+    }
+  }
+
   return layers.sort((a, b) => a.zIndex - b.zIndex);
 }
 
@@ -129,16 +173,46 @@ export const compositorService = {
     const layers = computeLayersServer(product, allDecorations, input, project.template, instanceConfig);
     
     // 3. Composite with Sharp
-    const compositeOperations = layers.map(layer => {
-      if (layer.type === 'image' && layer.filePath) {
-        return {
-          input: path.join(__dirname, '../../../../storage', layer.filePath),
-          top: Math.round(layer.y || 0),
-          left: Math.round(layer.x || 0),
-        };
-      }
-      return null;
-    }).filter(Boolean) as sharp.OverlayOptions[];
+    const compositeOperations: sharp.OverlayOptions[] = [];
+
+    for (const layer of layers) {
+        if (layer.type === 'image' && layer.filePath) {
+            compositeOperations.push({
+                input: path.join(__dirname, '../../../../storage', layer.filePath),
+                top: Math.round(layer.y || 0),
+                left: Math.round(layer.x || 0),
+            });
+        } else if (layer.type === 'text' && layer.textContent && layer.textStyle) {
+            // Server-side text rendering using SVG
+            // Sharp supports SVG compositing. We create an SVG string with the text.
+            const fontSize = layer.textStyle.fontSize || 24;
+            const color = layer.textStyle.color || '#000000';
+            const fontFamily = layer.textStyle.fontFamily || 'Arial';
+            
+            // Note: font support depends on the server environment. 
+            // For MVP, we assume standard fonts or generic families.
+            
+            const svgText = `
+                <svg width="${project.canvasWidth}" height="${project.canvasHeight}">
+                    <style>
+                        .text { 
+                            font-family: "${fontFamily}", sans-serif; 
+                            font-size: ${fontSize}px; 
+                            fill: ${color}; 
+                            font-weight: bold;
+                        }
+                    </style>
+                    <text x="${layer.x || 0}" y="${(layer.y || 0) + fontSize}" class="text">${layer.textContent}</text>
+                </svg>
+            `;
+            
+            compositeOperations.push({
+                input: Buffer.from(svgText),
+                top: 0, // SVG covers whole canvas, so 0,0
+                left: 0
+            });
+        }
+    }
 
     // Create base canvas
     // Note: Sharp needs a base image or create one.

@@ -66,6 +66,18 @@ export function computeLayers(
 
     if (projectName !== input.projectName) return false;
 
+    // Special handling for LIFE_APPLIANCE products (no energy/capacity check)
+    if (product.meta.category === 'LIFE_APPLIANCE') {
+        // Only check if decoration is explicitly restricted (unlikely for life appliance project, but safe to keep)
+        // If decoration has NO restrictions, it matches.
+        // If decoration HAS restrictions, it probably belongs to AC.
+        // Assumption: Decorations for Life Appliance usually have empty energy/capacity arrays.
+        if ((energyLevels && energyLevels.length > 0) || (capacityCodes && capacityCodes.length > 0)) {
+            return false; // This decoration is for AC (has specific AC attributes)
+        }
+        return true;
+    }
+
     if (energyLevels && energyLevels.length > 0) {
       if (!input.energyLevel || !energyLevels.includes(input.energyLevel)) {
         return false;
@@ -109,6 +121,38 @@ export function computeLayers(
     });
   });
 
-  // 4. 按 zIndex 排序
+  // 4. 添加价格文本图层 (如果输入包含价格)
+  if (input.priceOriginalText || input.pricePromoText || projectTemplate?.defaultPriceConfig) {
+    const defaultConfig = projectTemplate?.defaultPriceConfig;
+    const override = instanceConfig?.priceOverride;
+
+    // 原价
+    if (input.priceOriginalText || defaultConfig?.originalPrice) {
+        layers.push({
+            id: 'price-original',
+            type: 'text',
+            textContent: override?.original || input.priceOriginalText || '¥0',
+            textStyle: defaultConfig?.originalPrice,
+            zIndex: getZIndex('price'),
+            x: override?.originalPosition?.x ?? defaultConfig?.originalPrice?.x ?? 0,
+            y: override?.originalPosition?.y ?? defaultConfig?.originalPrice?.y ?? 0,
+        });
+    }
+
+    // 促销价
+    if (input.pricePromoText || defaultConfig?.promoPrice) {
+        layers.push({
+            id: 'price-promo',
+            type: 'text',
+            textContent: override?.promo || input.pricePromoText || '¥0',
+            textStyle: defaultConfig?.promoPrice,
+            zIndex: getZIndex('price'), // 假设促销价和原价在一个层级，或者可以在 template 中区分
+            x: override?.promoPosition?.x ?? defaultConfig?.promoPrice?.x ?? 0,
+            y: override?.promoPosition?.y ?? defaultConfig?.promoPrice?.y ?? 0,
+        });
+    }
+  }
+
+  // 5. 按 zIndex 排序
   return layers.sort((a, b) => a.zIndex - b.zIndex);
 }
