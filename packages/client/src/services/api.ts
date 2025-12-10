@@ -60,6 +60,11 @@ export const projectApi = {
     return response.data;
   },
 
+  duplicateProject: async (id: string, data: { projectName: string; displayName: string }) => {
+    const response = await api.post<Project>(`/projects/${id}/duplicate`, data);
+    return response.data;
+  },
+
   updateProject: async (id: string, data: Partial<Project>) => {
     const response = await api.put<Project>(`/projects/${id}`, data);
     return response.data;

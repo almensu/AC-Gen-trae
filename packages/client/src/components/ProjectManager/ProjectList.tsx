@@ -6,7 +6,7 @@ import { Project } from '@ac-gen/shared';
 import { EditProjectModal } from './EditProjectModal';
 
 export const ProjectList: React.FC = () => {
-  const { projects, loading, fetchProjects, deleteProject, createProject } = useProjectStore();
+  const { projects, loading, fetchProjects, deleteProject, duplicateProject } = useProjectStore();
 
   useEffect(() => {
     fetchProjects();
@@ -15,15 +15,13 @@ export const ProjectList: React.FC = () => {
   const handleDuplicate = async (project: Project) => {
     try {
         const newProjectName = `${project.projectName}_copy_${Date.now().toString().slice(-4)}`;
-        await createProject({
+        
+        await duplicateProject(project.id, {
             projectName: newProjectName,
             displayName: `${project.displayName} (Copy)`,
-            canvasWidth: project.canvasWidth,
-            canvasHeight: project.canvasHeight,
-            template: project.template,
-            linkedProductIds: project.linkedProductIds
         });
-        message.success('Project duplicated successfully');
+
+        message.success('Project duplicated successfully (including decorations and products)');
     } catch (error) {
         message.error('Failed to duplicate project');
     }

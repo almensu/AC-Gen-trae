@@ -8,7 +8,8 @@ interface ProjectState {
   error: string | null;
 
   fetchProjects: () => Promise<void>;
-  createProject: (data: Omit<Project, 'id' | 'createdAt'>) => Promise<void>;
+  createProject: (data: Omit<Project, 'id' | 'createdAt'>) => Promise<Project>;
+  duplicateProject: (id: string, data: { projectName: string; displayName: string }) => Promise<Project>;
   updateProject: (id: string, data: Partial<Project>) => Promise<void>;
   deleteProject: (id: string) => Promise<void>;
 }
@@ -33,8 +34,21 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     try {
       const project = await projectApi.createProject(data);
       set((state) => ({ projects: [...state.projects, project], loading: false }));
+      return project;
     } catch (error) {
       set({ loading: false, error: 'Failed to create project' });
+      throw error;
+    }
+  },
+
+  duplicateProject: async (id, data) => {
+    set({ loading: true, error: null });
+    try {
+      const project = await projectApi.duplicateProject(id, data);
+      set((state) => ({ projects: [...state.projects, project], loading: false }));
+      return project;
+    } catch (error) {
+      set({ loading: false, error: 'Failed to duplicate project' });
       throw error;
     }
   },

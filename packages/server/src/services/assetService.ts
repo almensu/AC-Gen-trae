@@ -62,5 +62,23 @@ export const assetService = {
   async getDecorationsByProject(projectName: string): Promise<DecorationAsset[]> {
     const all = await decorationsDb.read();
     return all.filter(d => d.meta.projectName === projectName);
+  },
+
+  async duplicateDecorations(sourceProjectName: string, targetProjectName: string): Promise<void> {
+    const all = await decorationsDb.read();
+    const sourceDecorations = all.filter(d => d.meta.projectName === sourceProjectName);
+    
+    const newDecorations: DecorationAsset[] = sourceDecorations.map(d => ({
+      ...d,
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+      meta: {
+        ...d.meta,
+        projectName: targetProjectName
+      }
+    }));
+    
+    for (const d of newDecorations) {
+      await decorationsDb.add(d);
+    }
   }
 };
