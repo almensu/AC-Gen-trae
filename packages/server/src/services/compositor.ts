@@ -327,14 +327,6 @@ export const compositorService = {
         }
     }
 
-    const psd: Psd = {
-        width: project.canvasWidth,
-        height: project.canvasHeight,
-        children: children
-    };
-
-    const buffer = writePsd(psd);
-
     // 4. Generate filename
     const series = product.meta.series || 'Unknown';
     const type = product.meta.acFormFactor === 'WALL' ? '挂机' : (product.meta.acFormFactor === 'CABINET' ? '柜机' : '');
@@ -342,9 +334,31 @@ export const compositorService = {
     const color = product.meta.color || '';
     const capacity = input.capacityCode || '';
     
-    const fileName = [series, type, energy, color, capacity]
+    // Construct descriptive name
+    const descriptiveName = [series, type, energy, color, capacity]
       .filter(Boolean)
-      .join('-') + '.psd';
+      .join('-');
+
+    // Add an empty layer with the product name at the very top (end of array)
+    // This acts as a label layer in Photoshop
+    const emptyCanvas = createCanvas(1, 1); // minimal canvas
+    children.push({
+        name: descriptiveName,
+        left: 0,
+        top: 0,
+        canvas: emptyCanvas,
+        hidden: true // Hide it so it doesn't affect visual
+    });
+
+    const psd: Psd = {
+        width: project.canvasWidth,
+        height: project.canvasHeight,
+        children: children
+    };
+
+    const buffer = writePsd(psd);
+    
+    const fileName = descriptiveName + '.psd';
 
     return {
       buffer: Buffer.from(buffer),
