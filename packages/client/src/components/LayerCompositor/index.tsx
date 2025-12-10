@@ -17,7 +17,8 @@ export const LayerCompositor: React.FC = () => {
   const { fetchInstances, getInstanceConfig } = useInstanceStore();
 
   const currentProject = useMemo(() => 
-    projects.find(p => p.id === selectedProjectId), 
+    projects.find(p => p.id === selectedProjectId) || 
+    projects.find(p => p.projectName === selectedProjectId), 
   [projects, selectedProjectId]);
 
   useEffect(() => {
@@ -99,13 +100,15 @@ export const LayerCompositor: React.FC = () => {
 
                   {/* 右侧：图层列表详情 */}
                   <div style={{ flex: 1 }}>
-                    <Text strong>Layers Stack (Bottom to Top):</Text>
+                    <Text strong>Layers Stack (Top to Bottom):</Text>
                     <List
                       size="small"
-                      dataSource={layers}
-                      renderItem={(layer: LayerItem, index) => (
+                      dataSource={[...layers].reverse()}
+                      renderItem={(layer: LayerItem, index) => {
+                        const layerNumber = layers.length - index;
+                        return (
                         <List.Item>
-                          <Text code>{index + 1}</Text> 
+                          <Text code>{layerNumber}</Text> 
                           <Text type={layer.type === 'image' && layer.assetId?.startsWith('product') ? 'success' : undefined}>
                             {layer.type === 'image' ? `Image: ${layer.filePath?.split('/').pop()}` : 'Text'}
                           </Text>
@@ -118,7 +121,7 @@ export const LayerCompositor: React.FC = () => {
                             </>
                           )}
                         </List.Item>
-                      )}
+                      )}}
                     />
                   </div>
                 </div>

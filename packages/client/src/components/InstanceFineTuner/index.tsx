@@ -70,6 +70,8 @@ export const InstanceFineTuner: React.FC = () => {
     if (!layerId.startsWith('deco-')) return;
     const decorationId = layerId.replace('deco-', '');
 
+    console.log('FineTuner: Layer Changed', { layerId, decorationId, changes });
+
     setCurrentConfig(prev => {
       if (!prev) return null;
       

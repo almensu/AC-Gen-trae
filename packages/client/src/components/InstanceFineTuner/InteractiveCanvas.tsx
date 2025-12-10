@@ -63,13 +63,16 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({ width, hei
     canvas.setBackgroundColor('#f0f0f0', canvas.renderAll.bind(canvas));
 
     const loadImagesSequentially = async () => {
+      // Create a map of layers for zIndex lookup
+      const layerMap = new Map(layers.map(l => [l.id, l]));
+
       for (const layer of layers) {
         if (layer.type === 'image' && layer.filePath) {
            await new Promise<void>((resolve) => {
              const imageUrl = `${API_BASE}${layer.filePath}`;
              fabric.Image.fromURL(imageUrl, (img) => {
                if (img) {
-                 const isInteractive = layer.assetId?.startsWith('deco'); // Only decorations are movable
+                 const isInteractive = layer.id.startsWith('deco-'); // Check ID prefix
                  
                  img.set({
                    left: layer.x || 0,
@@ -79,6 +82,8 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({ width, hei
                    name: layer.id, // Store layer ID
                    hasControls: false, // Disable rotation/scale handles for now
                    hasBorders: true,
+                   // @ts-ignore
+                   zIndex: layer.zIndex // Store zIndex for potential sorting
                  });
                  canvas.add(img);
                }
