@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import { Card, Button, List, Typography, Tag, Empty, message, Alert, Image, Tooltip, Space } from 'antd';
+import { Card, Button, List, Typography, Tag, Empty, message, Alert, Image, Tooltip, Space, Radio, Select } from 'antd';
 import { SaveOutlined, HolderOutlined, ReloadOutlined, UndoOutlined } from '@ant-design/icons';
 import {
   DndContext,
@@ -130,6 +130,7 @@ export const ProjectTemplateEditor: React.FC = () => {
   
   const [layers, setLayers] = useState<LayerOrderConfig[]>([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [previewMode, setPreviewMode] = useState<'WALL' | 'CABINET' | 'LIFE'>('WALL');
 
   const currentProject = useMemo(() => 
     projects.find(p => p.id === selectedProjectId) || 
@@ -304,14 +305,21 @@ export const ProjectTemplateEditor: React.FC = () => {
 
   // --- Preview Logic ---
 
-  // 1. Select a representative product
+  // 1. Select a representative product based on mode
   const previewProduct = useMemo(() => {
-      if (selectedProductIds.length > 0) {
-          return products.find(p => p.id === selectedProductIds[0]);
-      }
-      // Fallback: any product
-      return products[0];
-  }, [products, selectedProductIds]);
+      // Filter by mode
+      const filtered = products.filter(p => {
+          if (previewMode === 'WALL') return p.meta.category === 'AC' && p.meta.acFormFactor === 'WALL';
+          if (previewMode === 'CABINET') return p.meta.category === 'AC' && p.meta.acFormFactor === 'CABINET';
+          if (previewMode === 'LIFE') return p.meta.category === 'LIFE_APPLIANCE';
+          return false;
+      });
+
+      // If no product found for mode, fallback to any product but warn user visually
+      if (filtered.length === 0) return null;
+      
+      return filtered[0];
+  }, [products, previewMode]);
 
   // 2. Construct a preview input
   const previewInput = useMemo<CompositionInput | null>(() => {
@@ -319,11 +327,11 @@ export const ProjectTemplateEditor: React.FC = () => {
       return {
           projectName: currentProject.projectName,
           productId: previewProduct.id,
-          // Use selected energy/capacity if available, or fallbacks
-          energyLevel: selectedEnergyLevels[0] || 'B1',
-          capacityCode: selectedCapacityCodes[0] || '35',
+          // Use product's available energy/capacity if possible
+          energyLevel: previewProduct.meta.energyLevels?.[0] || 'B1',
+          capacityCode: previewProduct.meta.capacityCodes?.[0] || '35',
       };
-  }, [currentProject, previewProduct, selectedEnergyLevels, selectedCapacityCodes]);
+  }, [currentProject, previewProduct]);
 
   // 3. Compute layers for preview
   const previewLayers = useMemo(() => {
@@ -429,7 +437,22 @@ export const ProjectTemplateEditor: React.FC = () => {
       </div>
       
       <div style={{ width: 500 }}>
-        <Card title="Real-time Preview" bodyStyle={{ padding: 0 }}>
+        <Card 
+          title="Real-time Preview" 
+          bodyStyle={{ padding: 0 }}
+          extra={
+              <Radio.Group 
+                  value={previewMode} 
+                  onChange={e => setPreviewMode(e.target.value)}
+                  size="small"
+                  buttonStyle="solid"
+              >
+                  <Radio.Button value="WALL">AC Wall</Radio.Button>
+                  <Radio.Button value="CABINET">AC Cabinet</Radio.Button>
+                  <Radio.Button value="LIFE">Life Appliance</Radio.Button>
+              </Radio.Group>
+          }
+        >
            {currentProject && previewLayers.length > 0 ? (
                <div style={{ position: 'relative', width: '100%', paddingTop: '100%' }}>
                    <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
@@ -442,7 +465,7 @@ export const ProjectTemplateEditor: React.FC = () => {
                    </div>
                </div>
            ) : (
-               <Empty description="Not enough data for preview" />
+               <Empty description="No product found for selected type" />
            )}
            <div style={{ padding: 16, background: '#fafafa', borderTop: '1px solid #f0f0f0' }}>
                <Text type="secondary" style={{ fontSize: 12 }}>
