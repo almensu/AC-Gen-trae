@@ -23,7 +23,8 @@ export const InstanceFineTuner: React.FC = () => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const currentProject = useMemo(() => 
-    projects.find(p => p.id === selectedProjectId), 
+    projects.find(p => p.id === selectedProjectId) || 
+    projects.find(p => p.projectName === selectedProjectId), 
   [projects, selectedProjectId]);
 
   useEffect(() => {
