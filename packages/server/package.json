@@ -11,7 +11,9 @@
   "dependencies": {
     "@ac-gen/shared": "1.0.0",
     "@types/archiver": "^7.0.0",
+    "ag-psd": "^29.0.0",
     "archiver": "^7.0.1",
+    "canvas": "^3.2.0",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",

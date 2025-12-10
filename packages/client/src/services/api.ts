@@ -94,8 +94,8 @@ export const instanceApi = {
 };
 
 export const batchApi = {
-  generateBatch: async (variants: CompositionInput[]) => {
-    const response = await api.post('/batch/generate', { variants }, {
+  generateBatch: async (variants: CompositionInput[], format: 'png' | 'psd' = 'png') => {
+    const response = await api.post('/batch/generate', { variants, format }, {
       responseType: 'blob', // Important for downloading ZIP
     });
     return response.data;

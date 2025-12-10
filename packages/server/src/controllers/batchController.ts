@@ -8,7 +8,8 @@ import archiver from 'archiver';
 export const batchController = {
   generateBatch: async (req: Request, res: Response) => {
     try {
-      const { variants } = req.body as { variants: CompositionInput[] };
+      const { variants, format } = req.body as { variants: CompositionInput[]; format?: 'png' | 'psd' };
+      const outputFormat = format || 'png';
       
       if (!variants || variants.length === 0) {
         return res.status(400).json({ error: 'No variants provided' });
@@ -30,7 +31,7 @@ export const batchController = {
       const instances = await instanceService.getInstancesByProject(project.id);
 
       // Set up ZIP stream
-      res.attachment(`${projectId}_batch_output.zip`);
+      res.attachment(`${projectId}_batch_${outputFormat}.zip`);
       const archive = archiver('zip', {
         zlib: { level: 9 } // Sets the compression level.
       });
@@ -52,7 +53,13 @@ export const batchController = {
             i.capacityCode === variant.capacityCode
           );
 
-          const result = await compositorService.generateImage(variant, project, instanceConfig);
+          let result;
+          if (outputFormat === 'psd') {
+             result = await compositorService.generatePsd(variant, project, instanceConfig);
+          } else {
+             result = await compositorService.generateImage(variant, project, instanceConfig);
+          }
+          
           archive.append(result.buffer, { name: result.fileName });
         } catch (err) {
           console.error(`Failed to generate image for variant`, variant, err);

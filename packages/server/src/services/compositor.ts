@@ -1,5 +1,7 @@
 import sharp from 'sharp';
 import path from 'path';
+import { readPsd, writePsd, Psd } from 'ag-psd';
+import { createCanvas, loadImage } from 'canvas';
 import { CompositionInput, LayerItem, ProductAsset, DecorationAsset, Project, ProjectTemplate, InstanceConfig, DecorationCategory } from '@ac-gen/shared';
 import { assetService } from './assetService';
 import { projectService } from './projectService';
@@ -247,6 +249,105 @@ export const compositorService = {
 
     return {
       buffer: outputBuffer,
+      fileName
+    };
+  },
+
+  async generatePsd(
+    input: CompositionInput, 
+    project: Project,
+    instanceConfig?: InstanceConfig
+  ): Promise<{ buffer: Buffer; fileName: string }> {
+    // 1. Fetch assets
+    const allProducts = await assetService.getAllProducts();
+    const product = allProducts.find(p => p.id === input.productId);
+    
+    if (!product) {
+      throw new Error(`Product not found: ${input.productId}`);
+    }
+
+    const allDecorations = await assetService.getAllDecorations();
+    
+    // 2. Compute layers
+    const layers = computeLayersServer(product, allDecorations, input, project.template, instanceConfig);
+    
+    // 3. Build PSD structure using ag-psd
+    const children: any[] = [];
+
+    // Sort layers by zIndex ascending (Bottom to Top) for PSD
+    // ag-psd renders first child at bottom? No, first child is bottom in Photoshop usually.
+    // Actually ag-psd documentation says: "The first element in the array is the bottom layer."
+    const sortedLayers = [...layers].sort((a, b) => a.zIndex - b.zIndex);
+
+    for (const layer of sortedLayers) {
+        if (layer.type === 'image' && layer.filePath) {
+            const imgPath = path.join(__dirname, '../../../../storage', layer.filePath);
+            // Load image into canvas
+            const img = await loadImage(imgPath);
+            const canvas = createCanvas(img.width, img.height);
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+
+            children.push({
+                name: layer.id,
+                left: Math.round(layer.x || 0),
+                top: Math.round(layer.y || 0),
+                canvas: canvas, // ag-psd accepts canvas
+            });
+        } else if (layer.type === 'text' && layer.textContent) {
+            // Text layer support is basic in ag-psd, usually rendered as raster if using canvas
+            // To keep it simple and high-fidelity, we rasterize text to canvas too.
+            // Or use ag-psd text features if robust.
+            // Let's use rasterization for reliability.
+            
+            // Create a canvas for text
+            // Need to estimate size
+            const fontSize = layer.textStyle?.fontSize || 24;
+            const canvas = createCanvas(project.canvasWidth, fontSize * 2); // Approximation
+            const ctx = canvas.getContext('2d');
+            
+            ctx.font = `bold ${fontSize}px Arial`;
+            ctx.fillStyle = layer.textStyle?.color || '#000000';
+            ctx.fillText(layer.textContent, 0, fontSize); // Draw at baseline
+            
+            // Trim transparent pixels? No, just place it.
+            // Actually, drawing directly on a full-size transparent canvas is safer for positioning
+            const fullCanvas = createCanvas(project.canvasWidth, project.canvasHeight);
+            const fullCtx = fullCanvas.getContext('2d');
+            fullCtx.font = `bold ${fontSize}px Arial`;
+            fullCtx.fillStyle = layer.textStyle?.color || '#000000';
+            fullCtx.fillText(layer.textContent, layer.x || 0, (layer.y || 0) + fontSize);
+            
+            children.push({
+                name: layer.id,
+                left: 0,
+                top: 0,
+                canvas: fullCanvas
+            });
+        }
+    }
+
+    const psd: Psd = {
+        width: project.canvasWidth,
+        height: project.canvasHeight,
+        children: children
+    };
+
+    const buffer = writePsd(psd);
+
+    // 4. Generate filename
+    const series = product.meta.series || 'Unknown';
+    const type = product.meta.acFormFactor === 'WALL' ? '挂机' : (product.meta.acFormFactor === 'CABINET' ? '柜机' : '');
+    const energy = input.energyLevel || '';
+    const color = product.meta.color || '';
+    const capacity = input.capacityCode || '';
+    
+    const fileName = [series, type, energy, color, capacity]
+      .filter(Boolean)
+      .join('-') + '.psd';
+
+    return {
+      buffer: Buffer.from(buffer),
       fileName
     };
   }
