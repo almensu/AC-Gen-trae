@@ -8,14 +8,30 @@ interface InteractiveCanvasProps {
   scale?: number;
   layers: LayerItem[];
   onLayerChange: (layerId: string, changes: { x: number; y: number }) => void;
+  selectedLayerId?: string | null;
 }
 
 const API_BASE = 'http://localhost:3001/storage/';
 
-export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({ width, height, scale = 1, layers, onLayerChange }) => {
+export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({ width, height, scale = 1, layers, onLayerChange, selectedLayerId }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
   const onLayerChangeRef = useRef(onLayerChange);
+
+  // Sync selection from prop
+  useEffect(() => {
+    const canvas = fabricCanvasRef.current;
+    if (!canvas || !selectedLayerId) return;
+
+    const activeObj = canvas.getObjects().find((obj: any) => obj.name === selectedLayerId);
+    if (activeObj) {
+        canvas.setActiveObject(activeObj);
+        canvas.requestRenderAll();
+    } else {
+        canvas.discardActiveObject();
+        canvas.requestRenderAll();
+    }
+  }, [selectedLayerId]);
 
   useEffect(() => {
     onLayerChangeRef.current = onLayerChange;
