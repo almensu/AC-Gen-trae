@@ -15,6 +15,11 @@ const API_BASE = 'http://localhost:3001/storage/';
 export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({ width, height, scale = 1, layers, onLayerChange }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
+  const onLayerChangeRef = useRef(onLayerChange);
+
+  useEffect(() => {
+    onLayerChangeRef.current = onLayerChange;
+  }, [onLayerChange]);
 
   // Initialize Canvas
   useEffect(() => {
@@ -39,7 +44,7 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({ width, hei
       // @ts-ignore - name is added when creating object
       const layerId = target.name;
       if (layerId) {
-        onLayerChange(layerId, {
+        onLayerChangeRef.current(layerId, {
           x: target.left || 0,
           y: target.top || 0,
         });
@@ -50,44 +55,46 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({ width, hei
       canvas.dispose();
       fabricCanvasRef.current = null;
     };
-  }, [width, height, scale, onLayerChange]);
+  }, [width, height, scale]);
 
   // Render Layers
   useEffect(() => {
     const canvas = fabricCanvasRef.current;
     if (!canvas) return;
 
+    // Use a flag to track if this effect is still active
+    let isMounted = true;
+
     // Clear and redraw
-    // Note: In interactive mode, full redraw might be jarring if we just moved something.
-    // But since `layers` prop updates come from parent after we update state, 
-    // it effectively syncs.
-    // Optimization: Diff layers? For MVP, redraw is fine.
-    
     canvas.clear();
     canvas.setBackgroundColor('#f0f0f0', canvas.renderAll.bind(canvas));
 
     const loadImagesSequentially = async () => {
-      // Create a map of layers for zIndex lookup
-      const layerMap = new Map(layers.map(l => [l.id, l]));
-
       for (const layer of layers) {
+        if (!isMounted) break;
+
         if (layer.type === 'image' && layer.filePath) {
            await new Promise<void>((resolve) => {
              const imageUrl = `${API_BASE}${layer.filePath}`;
              fabric.Image.fromURL(imageUrl, (img) => {
+               if (!isMounted) {
+                 resolve();
+                 return;
+               }
+
                if (img) {
-                 const isInteractive = layer.id.startsWith('deco-'); // Check ID prefix
+                 const isInteractive = layer.id.startsWith('deco-');
                  
                  img.set({
                    left: layer.x || 0,
                    top: layer.y || 0,
                    selectable: isInteractive,
                    evented: isInteractive,
-                   name: layer.id, // Store layer ID
-                   hasControls: false, // Disable rotation/scale handles for now
+                   name: layer.id,
+                   hasControls: false,
                    hasBorders: true,
                    // @ts-ignore
-                   zIndex: layer.zIndex // Store zIndex for potential sorting
+                   zIndex: layer.zIndex
                  });
                  canvas.add(img);
                }
@@ -96,12 +103,19 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({ width, hei
            });
         }
       }
-      canvas.renderAll();
+      
+      if (isMounted) {
+        canvas.renderAll();
+      }
     };
 
     loadImagesSequentially();
 
-  }, [layers]);
+    return () => {
+      isMounted = false;
+    };
+
+  }, [layers]); // Only re-run if layers change, assuming canvas ref persists
 
   return (
     <div style={{ border: '1px solid #1890ff', display: 'inline-block' }}>
