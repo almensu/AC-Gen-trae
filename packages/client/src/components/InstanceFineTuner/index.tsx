@@ -170,10 +170,11 @@ export const InstanceFineTuner: React.FC = () => {
         <div style={{ display: 'flex', gap: '24px' }}>
           <div style={{ width: 600 }}>
             <Card title="Interactive Preview (Drag decorations to move)">
-              <div style={{ transform: 'scale(0.75)', transformOrigin: 'top left' }}>
+              <div style={{ overflow: 'hidden' }}>
                 <InteractiveCanvas
                   width={currentProject.canvasWidth}
                   height={currentProject.canvasHeight}
+                  scale={0.5} // Scale down to fit 600px width (approx)
                   layers={layers}
                   onLayerChange={handleLayerChange}
                 />

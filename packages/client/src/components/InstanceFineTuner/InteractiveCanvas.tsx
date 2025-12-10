@@ -5,13 +5,14 @@ import { LayerItem } from '@ac-gen/shared';
 interface InteractiveCanvasProps {
   width: number;
   height: number;
+  scale?: number;
   layers: LayerItem[];
   onLayerChange: (layerId: string, changes: { x: number; y: number }) => void;
 }
 
 const API_BASE = 'http://localhost:3001/storage/';
 
-export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({ width, height, layers, onLayerChange }) => {
+export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({ width, height, scale = 1, layers, onLayerChange }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
 
@@ -20,10 +21,13 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({ width, hei
     if (!canvasRef.current) return;
 
     const canvas = new fabric.Canvas(canvasRef.current, {
-      width,
-      height,
+      width: width * scale,
+      height: height * scale,
       backgroundColor: '#f0f0f0',
     });
+    
+    // Set global zoom for rendering, but internal coordinates remain consistent
+    canvas.setZoom(scale);
 
     fabricCanvasRef.current = canvas;
 
@@ -46,7 +50,7 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({ width, hei
       canvas.dispose();
       fabricCanvasRef.current = null;
     };
-  }, [width, height, onLayerChange]);
+  }, [width, height, scale, onLayerChange]);
 
   // Render Layers
   useEffect(() => {
