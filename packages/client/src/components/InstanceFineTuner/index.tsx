@@ -186,12 +186,16 @@ export const InstanceFineTuner: React.FC = () => {
               {currentConfig?.decorationAdjustments?.length === 0 ? (
                 <Text type="secondary">No adjustments made yet.</Text>
               ) : (
-                <ul>
-                  {currentConfig?.decorationAdjustments?.map(adj => (
-                    <li key={adj.decorationId}>
-                      Decoration {adj.decorationId}: X={Math.round(adj.offsetX)}, Y={Math.round(adj.offsetY)}
-                    </li>
-                  ))}
+                <ul style={{ paddingLeft: 20 }}>
+                  {currentConfig?.decorationAdjustments?.map(adj => {
+                    const deco = decorations.find(d => d.id === adj.decorationId);
+                    const name = deco ? `${deco.meta.category} (${deco.id.slice(-4)})` : adj.decorationId;
+                    return (
+                        <li key={adj.decorationId} style={{ marginBottom: 4 }}>
+                        <Text strong>{name}</Text>: X={Math.round(adj.offsetX)}, Y={Math.round(adj.offsetY)}
+                        </li>
+                    );
+                  })}
                 </ul>
               )}
             </Card>
