@@ -29,6 +29,8 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({ width, hei
       width: width * scale,
       height: height * scale,
       backgroundColor: '#f0f0f0',
+      perPixelTargetFind: true, // Enable pixel-level hit detection
+      targetFindTolerance: 4,   // Allow small tolerance for easier selection
     });
     
     // Set global zoom for rendering, but internal coordinates remain consistent
