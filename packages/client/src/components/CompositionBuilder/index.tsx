@@ -27,6 +27,8 @@ export const CompositionBuilder: React.FC = () => {
     setSelectedEnergyLevels,
     setSelectedCapacityCodes,
     generateVariants,
+    initializeFromStorage,
+    reset
   } = useCompositionStore();
 
   const [activeTab, setActiveTab] = useState('config');
@@ -34,7 +36,8 @@ export const CompositionBuilder: React.FC = () => {
   useEffect(() => {
     fetchProjects();
     fetchProducts();
-  }, [fetchProjects, fetchProducts]);
+    initializeFromStorage(); // Restore state on mount
+  }, [fetchProjects, fetchProducts, initializeFromStorage]);
 
   // 当选择项目改变时，获取该项目的装饰图
   useEffect(() => {
@@ -118,19 +121,32 @@ export const CompositionBuilder: React.FC = () => {
                 
                 <Col span={8}>
                   <Form.Item label="Select Products" required>
-                    <Select
-                      mode="multiple"
-                      placeholder="Select products"
-                      value={selectedProductIds}
-                      onChange={setSelectedProductIds}
-                      disabled={!selectedProjectId}
-                    >
-                      {availableProducts.map(p => (
-                        <Option key={p.id} value={p.id}>
-                          {p.meta.series} - {p.meta.color} ({p.meta.acFormFactor})
-                        </Option>
-                      ))}
-                    </Select>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <Select
+                        mode="multiple"
+                        placeholder="Select products"
+                        value={selectedProductIds}
+                        onChange={setSelectedProductIds}
+                        disabled={!selectedProjectId}
+                        style={{ width: '100%' }}
+                        maxTagCount="responsive"
+                        >
+                        {availableProducts.map(p => (
+                            <Option key={p.id} value={p.id}>
+                            {p.meta.series} - {p.meta.color} ({p.meta.acFormFactor})
+                            </Option>
+                        ))}
+                        </Select>
+                        <Button 
+                            size="small" 
+                            type="text" 
+                            danger 
+                            onClick={() => setSelectedProductIds([])}
+                            disabled={selectedProductIds.length === 0}
+                        >
+                            Clear Selection
+                        </Button>
+                    </div>
                   </Form.Item>
                 </Col>
 

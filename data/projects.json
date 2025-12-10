@@ -68,5 +68,75 @@
       "1765250861383",
       "1765331330559"
     ]
+  },
+  {
+    "id": "1765332012876",
+    "createdAt": "2025-12-10T02:00:12.876Z",
+    "projectName": "金湖店-01_copy_2862",
+    "displayName": "11 (Copy)",
+    "canvasWidth": 800,
+    "canvasHeight": 800,
+    "template": {
+      "layerOrder": [
+        {
+          "type": "price",
+          "zIndex": 100
+        },
+        {
+          "type": "decoration",
+          "decorationCategory": "BRAND_LOGO",
+          "zIndex": 90
+        },
+        {
+          "type": "decoration",
+          "decorationCategory": "OTHER",
+          "decorationId": "1765274177015",
+          "zIndex": 80
+        },
+        {
+          "type": "product",
+          "zIndex": 70
+        },
+        {
+          "type": "decoration",
+          "decorationCategory": "OTHER",
+          "decorationId": "1765261486807",
+          "zIndex": 60
+        },
+        {
+          "type": "decoration",
+          "decorationCategory": "OTHER",
+          "decorationId": "1765261468389",
+          "zIndex": 50
+        },
+        {
+          "type": "decoration",
+          "decorationCategory": "OTHER",
+          "decorationId": "1765261366034",
+          "zIndex": 40
+        },
+        {
+          "type": "decoration",
+          "decorationCategory": "OTHER",
+          "decorationId": "1765261276480",
+          "zIndex": 30
+        },
+        {
+          "type": "decoration",
+          "decorationCategory": "OTHER",
+          "decorationId": "1765261252009",
+          "zIndex": 20
+        },
+        {
+          "type": "background",
+          "zIndex": 10
+        }
+      ]
+    },
+    "linkedProductIds": [
+      "1765250723181",
+      "1765250861383",
+      "1765331330559"
+    ]
   }
 ]

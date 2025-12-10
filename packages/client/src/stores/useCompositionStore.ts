@@ -16,6 +16,7 @@ interface CompositionState {
   setSelectedEnergyLevels: (levels: EnergyLevelCode[]) => void;
   setSelectedCapacityCodes: (codes: CapacityCode[]) => void;
   
+  initializeFromStorage: () => void;
   generateVariants: () => void;
   reset: () => void;
 }
@@ -27,10 +28,42 @@ export const useCompositionStore = create<CompositionState>((set, get) => ({
   selectedCapacityCodes: [],
   generatedVariants: [],
 
-  setProjectId: (id) => set({ selectedProjectId: id }),
-  setSelectedProductIds: (ids) => set({ selectedProductIds: ids }),
-  setSelectedEnergyLevels: (levels) => set({ selectedEnergyLevels: levels }),
-  setSelectedCapacityCodes: (codes) => set({ selectedCapacityCodes: codes }),
+  // Persist selections to localStorage whenever they change
+  setProjectId: (id) => {
+    set({ selectedProjectId: id });
+    localStorage.setItem('composition_projectId', id);
+  },
+  setSelectedProductIds: (ids) => {
+    set({ selectedProductIds: ids });
+    localStorage.setItem('composition_productIds', JSON.stringify(ids));
+  },
+  setSelectedEnergyLevels: (levels) => {
+    set({ selectedEnergyLevels: levels });
+    localStorage.setItem('composition_energyLevels', JSON.stringify(levels));
+  },
+  setSelectedCapacityCodes: (codes) => {
+    set({ selectedCapacityCodes: codes });
+    localStorage.setItem('composition_capacityCodes', JSON.stringify(codes));
+  },
+
+  // Initialize from localStorage
+  initializeFromStorage: () => {
+    try {
+      const projectId = localStorage.getItem('composition_projectId');
+      const productIds = JSON.parse(localStorage.getItem('composition_productIds') || '[]');
+      const energyLevels = JSON.parse(localStorage.getItem('composition_energyLevels') || '[]');
+      const capacityCodes = JSON.parse(localStorage.getItem('composition_capacityCodes') || '[]');
+
+      set({
+        selectedProjectId: projectId,
+        selectedProductIds: productIds,
+        selectedEnergyLevels: energyLevels,
+        selectedCapacityCodes: capacityCodes
+      });
+    } catch (e) {
+      console.error('Failed to restore composition state', e);
+    }
+  },
 
   generateVariants: () => {
     const { 
@@ -60,11 +93,18 @@ export const useCompositionStore = create<CompositionState>((set, get) => ({
     set({ generatedVariants: variants });
   },
 
-  reset: () => set({
-    selectedProjectId: null,
-    selectedProductIds: [],
-    selectedEnergyLevels: [],
-    selectedCapacityCodes: [],
-    generatedVariants: []
-  }),
+  reset: () => {
+    localStorage.removeItem('composition_projectId');
+    localStorage.removeItem('composition_productIds');
+    localStorage.removeItem('composition_energyLevels');
+    localStorage.removeItem('composition_capacityCodes');
+    
+    set({
+      selectedProjectId: null,
+      selectedProductIds: [],
+      selectedEnergyLevels: [],
+      selectedCapacityCodes: [],
+      generatedVariants: []
+    });
+  },
 }));
