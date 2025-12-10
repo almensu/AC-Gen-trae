@@ -250,7 +250,11 @@ export const CompositionBuilder: React.FC = () => {
   return (
     <Tabs 
       activeKey={activeTab} 
-      onChange={setActiveTab} 
+      onChange={(key) => {
+        setActiveTab(key);
+        // Fix for "Blocked aria-hidden on an element because its descendant retained focus"
+        (document.activeElement as HTMLElement)?.blur();
+      }}
       items={tabItems}
     />
   );
